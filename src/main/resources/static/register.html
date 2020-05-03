@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>注册界面</title>
+    <link rel="stylesheet" href="css/reset.css"/>
+    <link rel="stylesheet" href="css/common.css"/>
+    <link rel="stylesheet" href="css/font-awesome.min.css"/>
+</head>
+<body>
+<div class="wrap login_wrap">
+    <div class="content">
+
+        <div class="logo"></div>
+
+        <div class="login_box">
+
+            <div class="login_form">
+                <div class="login_title">
+                    注册
+                </div>
+                <div class="form_text_ipt">
+                    <input name="username" id="username" type="text" placeholder="账户名">
+                </div>
+                <div class="ececk_warning"><span>账户名不能为空</span></div>
+
+                <div class="form_text_ipt">
+                    <input name="password" id="password" type="password" placeholder="密码">
+                </div>
+                <div class="ececk_warning"><span>密码不能为空</span></div>
+
+                <div class="form_text_ipt">
+                    <input name="email" type="email" id="email" placeholder="邮箱地址">
+                </div>
+                <div class="ececk_warning"><span>邮箱不能为空</span></div>
+
+                <div class="form_text_ipt">
+                    <input name="nickName" id="nickName" type="text" placeholder="昵称">
+                </div>
+                <div class="ececk_warning"><span>昵称不能为空</span></div>
+
+                <div class="form_text_ipt">
+                    验证码：<input name="code" id="code" type="text" placeholder="验证码">
+                </div>
+                <div class="ececk_warning"><span>验证码不能为空</span></div>
+                <div style="text-align: center">
+                    <label class="label-important">验证码</label>
+                </div>
+                <div style="text-align: center">
+                    头像文件：<input type="file" id="avatar" placeholder="请选择头像文件">
+                </div>
+                <div class="form_btn">
+                    <button type="button" id="register">注册</button>
+                </div>
+                <div class="form_reg_btn">
+                    <span>已有帐号？</span><a href="/login">马上登录</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/common.js"></script>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $.ajax({
+            url: '/user/getAuthCode',
+            type: 'get',
+            headers: {
+                "Content-Type": "application/json"
+            },
+            success: function (data) {
+                $(".label-important").text(data.data);
+            }
+        });
+        $("#register").click(function () {
+            let username = $("#username").val();
+            let password = $("#password").val();
+            let nickName = $("#nickName").val();
+            let email = $("#email").val();
+            let code = $("#code").val();
+            let user = {'username': username, 'password': password, 'nickName': nickName, 'email': email}
+            $.ajax({
+                url: '/user/registry?verifyCode=' + code,
+                type: 'post',
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                data: JSON.stringify(user),
+                success: function (data) {
+                    console.log(data);
+                    let token = data.data.token;
+                    let tokenHead = data.data.tokenHead;
+                    localStorage.setItem("jwtToken", tokenHead + " " + token);
+                    let formData = new FormData();
+                    formData.append("avatar", $("#avatar")[0].files[0]);
+                    $.ajax({
+                        url: '/user/uploadAvatar',
+                        headers: {
+                            "Authorization": tokenHead + " " + token
+                        },
+                        type: 'post',
+                        processData: false,
+                        contentType: false,
+                        data: formData,
+                        success: function (data) {
+                            //console.log(data);
+                            if (data.code !== 200) {
+                                alert(data.message);
+                                $(location).attr('href', "/register.html");
+                                return;
+                            }
+                            $(location).attr('href', "/index.html");
+                        },
+                        error: function () {
+                            alert("注册失败！");
+                        }
+                    });
+                }
+            });
+        });
+    });
+</script>
+<div style="text-align:center;">
+</div>
+</body>
+</html>
